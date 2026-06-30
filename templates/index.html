@@ -1,0 +1,200 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>NEXUS AI — Multi-Modal Cyberpunk HUD</title>
+  <!-- Typography and CDNs -->
+  <link
+    href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Inter:wght@300;400;500;600&family=JetBrains+Mono:wght@400;500&display=swap"
+    rel="stylesheet" />
+  <link rel="stylesheet"
+    href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/atom-one-dark.min.css" />
+
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}" />
+</head>
+
+<body>
+
+  <!-- Background Orbs and Particles -->
+  <div class="bg-orbs">
+    <div class="orb orb1"></div>
+    <div class="orb orb2"></div>
+    <div class="orb orb3"></div>
+  </div>
+  <div class="particles-container" id="particles"></div>
+
+  <!-- Header -->
+  <header class="glass-panel">
+    <div class="header-left">
+      <button class="menu-toggle" id="menu-toggle" onclick="toggleSidebar()">☰</button>
+      <div class="logo-container">N</div>
+      <div class="logo-title-wrap">
+        <div class="logo-title holographic-shimmer">NEXUS</div>
+        <div class="logo-subtitle">MULTI-MODAL AI</div>
+      </div>
+    </div>
+
+    <!-- Stats Chips in center header -->
+    <div class="header-center">
+      <div class="stat-chip chip-gpt">⚡ GPT-4o</div>
+      <div class="stat-chip chip-live">🌐 LIVE DATA</div>
+      <div class="stat-chip chip-dalle">🔮 DALL·E 3</div>
+    </div>
+
+    <div class="header-right">
+      <div class="status-wrap">
+        <div class="status-dot"></div>
+        <div class="status-text">ONLINE</div>
+      </div>
+      <button class="clear-btn" onclick="clearChat()">⟳ CLEAR</button>
+    </div>
+  </header>
+
+  <!-- Main Container -->
+  <div class="main-container">
+
+    <!-- Sidebar Region (Modes) -->
+    <aside class="sidebar glass-panel" id="sidebar">
+      <div class="sidebar-label">MODES</div>
+
+      <button class="mode-btn active" data-mode="chat" onclick="setMode('chat')">
+        <span class="icon icon-chat">💬</span>
+        <div class="mode-info">
+          <span class="mode-name">Chat</span>
+          <span class="mode-desc">GPT-4o conversation</span>
+        </div>
+      </button>
+
+      <button class="mode-btn" data-mode="weather" onclick="setMode('weather')">
+        <span class="icon icon-weather">🌦</span>
+        <div class="mode-info">
+          <span class="mode-name">Weather</span>
+          <span class="mode-desc">Real-time forecast</span>
+        </div>
+      </button>
+
+      <button class="mode-btn" data-mode="news" onclick="setMode('news')">
+        <span class="icon icon-news">📡</span>
+        <div class="mode-info">
+          <span class="mode-name">News</span>
+          <span class="mode-desc">Live headlines</span>
+        </div>
+      </button>
+
+      <button class="mode-btn" data-mode="image" onclick="setMode('image')">
+        <span class="icon icon-image">🎨</span>
+        <div class="mode-info">
+          <span class="mode-name">Image Gen</span>
+          <span class="mode-desc">DALL·E 3</span>
+        </div>
+      </button>
+
+      <button class="mode-btn" data-mode="code" onclick="setMode('code')">
+        <span class="icon icon-code">⚙️</span>
+        <div class="mode-info">
+          <span class="mode-name">Code</span>
+          <span class="mode-desc">Write & debug</span>
+        </div>
+      </button>
+
+      <div class="sidebar-divider"></div>
+
+      <div class="sidebar-label">QUICK ASK</div>
+
+      <button class="mode-btn" onclick="quickPrompt('Explain quantum computing in simple terms')">
+        <span class="icon">🔬</span>
+        <div class="mode-info">
+          <span class="mode-name">Quantum</span>
+        </div>
+      </button>
+
+      <button class="mode-btn" onclick="quickPrompt('What is machine learning and how does it work?')">
+        <span class="icon">🤖</span>
+        <div class="mode-info">
+          <span class="mode-name">Machine Learning</span>
+        </div>
+      </button>
+
+      <button class="mode-btn" onclick="quickPrompt('Give me 5 Python productivity tips')">
+        <span class="icon">🐍</span>
+        <div class="mode-info">
+          <span class="mode-name">Python Tips</span>
+        </div>
+      </button>
+    </aside>
+
+    <!-- Chat Area Region -->
+    <main class="chat-container glass-panel">
+      <div class="messages-area" id="messages">
+
+        <!-- Welcome Screen -->
+        <div class="welcome-panel" id="welcome">
+          <div class="welcome-title holographic-shimmer">NEXUS AI</div>
+          <p class="welcome-subtitle">Suspended in deep zero-gravity void space. Choose a mode below or begin chatting.
+          </p>
+          <div class="quick-chips-wrap">
+            <button class="chip-btn" onclick="quickPrompt('What can you do?')">✨ What can you do?</button>
+            <button class="chip-btn" onclick="quickPrompt('Write a Python web scraper')">🐍 Python code</button>
+            <button class="chip-btn" onclick="setMode('weather')">🌤 Check weather</button>
+            <button class="chip-btn" onclick="setMode('news')">📰 Latest news</button>
+            <button class="chip-btn" onclick="setMode('image')">🎨 Generate image</button>
+            <button class="chip-btn" onclick="quickPrompt('Explain transformers in AI')">🤖 Explain AI</button>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- Input Bar Region -->
+      <div class="input-section">
+
+        <!-- Conditional inputs depending on Mode -->
+        <div class="mode-panel" id="panel-weather">
+          <input type="text" class="panel-input" id="weather-city"
+            placeholder="City name (e.g. London, Mumbai, Tokyo)" />
+        </div>
+
+        <div class="mode-panel" id="panel-news">
+          <input type="text" class="panel-input" id="news-topic"
+            placeholder="News Topic (e.g. Technology, AI, Finance)" />
+        </div>
+
+        <div class="mode-panel" id="panel-image">
+          <input type="text" class="panel-input" id="image-prompt" placeholder="Image description..." />
+        </div>
+
+        <div class="mode-panel" id="panel-code">
+          <select class="panel-select" id="code-lang">
+            <option value="python">Python</option>
+            <option value="javascript">JavaScript</option>
+            <option value="java">Java</option>
+            <option value="c++">C++</option>
+            <option value="sql">SQL</option>
+            <option value="bash">Bash</option>
+          </select>
+        </div>
+
+        <!-- Main text inputs row -->
+        <div class="input-row">
+          <textarea class="chat-input" id="chat-input" rows="1" placeholder="Ask NEXUS anything..."
+            onkeydown="handleKey(event)" oninput="autoResize(this)"></textarea>
+          <button class="send-btn" id="send-btn" onclick="send()">➤</button>
+        </div>
+
+        <div class="hint-bar">ENTER TO SEND · SHIFT+ENTER FOR NEW LINE</div>
+      </div>
+    </main>
+
+  </div>
+
+  <div class="toast-container" id="toast-container"></div>
+
+  <!-- CDN scripts included before body closing -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/marked/9.1.6/marked.min.js"></script>
+
+  <script src="{{ url_for('static', filename='js/app.js') }}"></script>
+</body>
+
+</html>
