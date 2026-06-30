@@ -20,7 +20,10 @@ CORS(app)
 from dotenv import load_dotenv
 import os
 
-load_dotenv()
+# Resolve the absolute path to the directory containing app.py
+basedir = os.path.abspath(os.path.dirname(__file__))
+# Force override using the absolute .env path
+load_dotenv(os.path.join(basedir, ".env"), override=True)
 
 GEMINI_API_KEY = os.getenv("GEMINI_API_KEY")
 WEATHER_API_KEY = os.getenv("WEATHER_API_KEY")
@@ -44,7 +47,7 @@ def call_gemini(messages_text):
         return None
     try:
         from google import genai
-        client = genai.Client(api_key=GEMINI_API_KEY)
+        client = genai.Client(api_key=GEMINI_API_KEY, http_options={'timeout': 5.0})
         response = client.models.generate_content(
             model="gemini-2.0-flash",
             contents=messages_text,
@@ -145,7 +148,7 @@ def weather():
 
     try:
         res = requests.get(
-            "http://api.openweathermap.org/data/2.5/weather",
+            "https://api.openweathermap.org/data/2.5/weather",
             params={"q": city, "appid": WEATHER_API_KEY, "units": "metric"},
             timeout=10
         )
@@ -176,10 +179,16 @@ def weather():
 
         return jsonify({"type": "weather", "data": weather_info})
 
-    except requests.exceptions.HTTPError:
-        return jsonify({"error": f"City '{city}' not found. Try another name."}), 404
+    except requests.exceptions.HTTPError as e:
+        status_code = e.response.status_code if e.response is not None else 500
+        if status_code == 401:
+            return jsonify({"error": "Weather API key is invalid or unauthorized."}), 401
+        elif status_code == 404:
+            return jsonify({"error": f"City '{city}' not found. Try another name."}), 404
+        else:
+            return jsonify({"error": f"Weather API error (Status {status_code})."}), status_code
     except Exception as e:
-        return jsonify({"error": str(e)}), 500
+        return jsonify({"error": f"Unexpected error: {str(e)}"}), 500
 
 
 @app.route("/api/news", methods=["POST"])
@@ -212,8 +221,14 @@ def news():
         ]
         return jsonify({"type": "news", "topic": topic, "articles": news_items})
 
+    except requests.exceptions.HTTPError as e:
+        status_code = e.response.status_code if e.response is not None else 500
+        if status_code == 401:
+            return jsonify({"error": "News API key is invalid or unauthorized."}), 401
+        else:
+            return jsonify({"error": f"News API error (Status {status_code})."}), status_code
     except Exception as e:
-        return jsonify({"error": str(e)}), 500
+        return jsonify({"error": f"Unexpected error: {str(e)}"}), 500
 
 
 @app.route("/api/image", methods=["POST"])
